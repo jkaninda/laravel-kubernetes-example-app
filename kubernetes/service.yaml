@@ -1,0 +1,38 @@
+## DATA BASE
+apiVersion: v1
+kind: Service
+metadata:
+  name: laravel-db
+  namespace: prod
+spec:
+  selector:
+    app: laravel-db
+  ports:
+  - port: 5432
+    targetPort: 5432 
+---
+## WEB
+apiVersion: v1
+kind: Service
+metadata:
+  name: laravel-app
+  namespace: prod
+spec:
+  selector:
+    app: laravel-app
+  ports:
+  - port: 80
+    targetPort: 80    
+---
+# Redis
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: prod
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379

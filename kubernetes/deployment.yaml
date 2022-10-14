@@ -1,0 +1,160 @@
+## Redis deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:alpine
+        imagePullPolicy: IfNotPresent
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "0.30"
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-ps
+          mountPath: /data
+      volumes:
+      - name: redis-ps
+        persistentVolumeClaim:
+          claimName: redis-pvc
+---          
+## Data base deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-db
+  labels:
+    app: laravel-db
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+     app: laravel-db
+  template:
+    metadata:
+      labels:
+        app: laravel-db
+    spec:
+      containers:
+      - name: laravel-db
+        image: postgres:14.5
+        imagePullPolicy: IfNotPresent
+        env:
+         - name: POSTGRES_PASSWORD
+           valueFrom:
+            secretKeyRef:
+             name: laravel-db
+             key: password
+        envFrom:
+            - configMapRef:
+                name: laravel-db
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: laravel-db-ps
+          mountPath: /var/lib/postgresql/data
+      volumes:
+      - name: laravel-db-ps
+        persistentVolumeClaim:
+          claimName: laravel-db-pvc
+---
+## Laravel App deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: laravel-app
+  namespace: prod
+spec:
+  selector:
+    matchLabels:
+      app: laravel-app
+  template:
+    metadata:
+      labels:
+        app: laravel-app
+    spec:
+      #replicas: 2
+      # If your using a private registry
+      imagePullSecrets:
+         - name: regcred
+      containers:
+      - name: laravel-app
+        image: jkaninda/laravel-kubernetes-example-app:v1.0
+        imagePullPolicy: IfNotPresent
+        env:
+         - name: APP_KEY
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: APP_KEY
+         - name: FCM_KEY
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: FCM_KEY
+         - name: DB_USERNAME
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: DB_USERNAME
+         - name: DB_PASSWORD
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: DB_PASSWORD
+         - name: REDIS_PASSWORD
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: REDIS_PASSWORD
+         - name: MAIL_USERNAME
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: MAIL_USERNAME
+         - name: MAIL_PASSWORD
+           valueFrom:
+            secretKeyRef:
+             name: laravel-app
+             key: MAIL_PASSWORD
+        envFrom:
+            - configMapRef:
+                name: laravel-app
+        lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "sh"
+                  - "-c"
+                  - >
+                   php /var/www/html/html/artisan migrate --force
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "1.0"
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: laravel-ps
+          mountPath: /var/www/html/storage
+      volumes:
+      - name: laravel-ps
+        persistentVolumeClaim:
+          claimName: laravel-pvc

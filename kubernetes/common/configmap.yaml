@@ -1,0 +1,103 @@
+## DB
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: laravel-db
+  namespace: prod
+data:
+  POSTGRES_DB: laravel
+  POSTGRES_USER: laravel
+---
+## APP
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: laravel-app
+  namespace: prod
+data:
+  APP_NAME: "Laravel"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_URL: "https://example.com"
+  
+  
+  # Update the LOG_CHANNEL to stdout for Kubernetes
+  LOG_CHANNEL: "stdout"
+  LOG_LEVEL: "debug"
+  DB_CONNECTION: "pgsql"
+  DB_HOST: "laravel-db"
+  DB_PORT: "5432"
+  DB_DATABASE: "laravel"
+  BROADCAST_DRIVER: "log"
+  CACHE_DRIVER: "redis"
+  FILESYSTEM_DRIVER: "local"
+  QUEUE_CONNECTION: "redis"
+  
+  # Update the Session driver to Redis, based off part-2 of series
+  SESSION_DRIVER: "sync"
+  SESSION_LIFETIME: "120"
+  MEMCACHED_HOST: "memcached"
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  #
+  MAIL_MAILER: "smtp"
+  MAIL_HOST: "mail.example.com"
+  MAIL_PORT: "587"
+  MAIL_ENCRYPTION: "ssl"
+  MAIL_FROM_ADDRESS: "noreply@example.com"
+  MAIL_FROM_NAME: "${APP_NAME}"
+
+  AWS_DEFAULT_REGION: "us-east-1"
+  AWS_BUCKET: ""
+  AWS_USE_PATH_STYLE_ENDPOINT: "false"
+  PUSHER_APP_ID: ""
+  PUSHER_APP_CLUSTER: "mt1"
+  #Kafka
+  KAFKA_BROKERS: "kafka:9092"
+  KAFKA_TOPIC: "main"
+  KAFKA_CONSUMER_GROUP_ID: "laravel-group"
+  KAFKA_USER_DATA_TOPIC: "user-data"
+  ###
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  PUSHER_APP_KEY: ""
+  PUSHER_APP_SECRET: ""
+  MIX_PUSHER_APP_KEY: "${PUSHER_APP_KEY}"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: default-conf
+  namespace: prod
+data:
+  default: |
+   server {
+    listen 80;
+    index index.php index.html;
+    error_log  /var/log/nginx/error.log;
+    access_log /var/log/nginx/access.log;
+    root /var/www/html/public;
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        fastcgi_pass laravel-app:9000;
+        fastcgi_index index.php;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param PATH_INFO $fastcgi_path_info;
+        
+    }
+    client_max_body_size 50M;
+    server_tokens off;
+
+     # Hide PHP headers 
+    fastcgi_hide_header X-Powered-By; 
+    fastcgi_hide_header X-CF-Powered-By;
+    fastcgi_hide_header X-Runtime;
+
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        gzip_static on;
+    }
+    }

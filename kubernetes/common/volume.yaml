@@ -1,0 +1,38 @@
+## Data base
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: laravel-db-pvc
+  namespace: prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+## Laravel App
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: laravel-pvc
+  namespace: prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+## Redis
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: prod
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
