@@ -7,6 +7,7 @@ RUN composer update
 
 ## RUN npm build
 ARG CACHEBUST=1
+RUN npm run install
 RUN npm run build
 
 RUN mkdir -p /var/www/html/storage/framework
