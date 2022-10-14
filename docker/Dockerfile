@@ -7,8 +7,8 @@ RUN composer update
 
 ## RUN npm build
 ARG CACHEBUST=1
-RUN npm run install && \
- npm run build
+RUN npm run install
+RUN npm run build
 
 RUN mkdir -p /var/www/html/storage/framework
 RUN chown -R www-data:www-data /var/www/html/storage
